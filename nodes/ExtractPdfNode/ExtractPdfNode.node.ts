@@ -24,11 +24,45 @@ export class ExtractPdfNode implements INodeType {
         outputs: ['main'],
         properties: [
             {
-                displayName: 'PDF File',
+                displayName: 'Input Type',
+                name: 'inputType',
+                type: 'options',
+                options: [
+                    {
+                        name: 'File Path',
+                        value: 'filePath'
+                    },
+                    {
+                        name: 'Binary Data',
+                        value: 'binaryData'
+                    }
+                ],
+                default: 'filePath',
+                description: 'How to input the PDF file'
+            },
+            {
+                displayName: 'PDF File Path',
                 name: 'pdfFile',
                 type: 'string',
                 default: '',
-                description: 'The PDF file to extract text from',
+                description: 'The path to the PDF file',
+                displayOptions: {
+                    show: {
+                        inputType: ['filePath']
+                    }
+                }
+            },
+            {
+                displayName: 'Binary Property',
+                name: 'binaryPropertyName',
+                type: 'string',
+                default: 'data',
+                description: 'Name of the binary property containing the PDF file',
+                displayOptions: {
+                    show: {
+                        inputType: ['binaryData']
+                    }
+                }
             },
             {
                 displayName: 'Options',
@@ -107,35 +141,71 @@ export class ExtractPdfNode implements INodeType {
         const returnData: INodeExecutionData[] = [];
         
         try {
-            // Get parameters from the node
-            const pdfFile = this.getNodeParameter('pdfFile', 0) as string;
-            if (!pdfFile) {
-                throw new Error('No PDF file specified');
+            // Get input type parameter
+            const inputType = this.getNodeParameter('inputType', 0) as string;
+            let dataBuffer: Buffer;
+            
+            if (inputType === 'filePath') {
+                // Get parameters from the node for file path input
+                const pdfFile = this.getNodeParameter('pdfFile', 0) as string;
+                if (!pdfFile) {
+                    throw new Error('No PDF file path specified');
+                }
+                
+                const filePath = pdfFile;
+                
+                // Check if file exists
+                if (!fs.existsSync(filePath)) {
+                    throw new Error(`PDF file not found: ${filePath}`);
+                }
+
+                // Check file size
+                const fileStats = fs.statSync(filePath);
+                const fileSizeMB = fileStats.size / (1024 * 1024);
+                const options = this.getNodeParameter('options', 0, {}) as PDFOptions & { 
+                    continueOnError?: boolean,
+                    processInChunks?: boolean,
+                    showProgress?: boolean
+                };
+                const maxFileSize = options.maxFileSize || 100;
+                
+                if (fileSizeMB > maxFileSize) {
+                    throw new Error(`File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
+                }
+                
+                // Read file with memory efficiency for large files
+                dataBuffer = fs.readFileSync(filePath);
+            } else {
+                // Process binary data (e.g., from Google Drive node)
+                const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
+                
+                if (!items[0].binary || !items[0].binary[binaryPropertyName]) {
+                    throw new Error(`No binary data found in property "${binaryPropertyName}"`);
+                }
+                
+                // Get binary data from the result of the previous node
+                const binaryData = items[0].binary[binaryPropertyName];
+                dataBuffer = Buffer.from(binaryData.data, 'base64');
+                
+                // Check file size
+                const options = this.getNodeParameter('options', 0, {}) as PDFOptions & { 
+                    continueOnError?: boolean,
+                    processInChunks?: boolean,
+                    showProgress?: boolean
+                };
+                const fileSizeMB = dataBuffer.length / (1024 * 1024);
+                const maxFileSize = options.maxFileSize || 100;
+                
+                if (fileSizeMB > maxFileSize) {
+                    throw new Error(`File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
+                }
             }
             
-            const filePath = pdfFile;
             const options = this.getNodeParameter('options', 0, {}) as PDFOptions & { 
                 continueOnError?: boolean,
                 processInChunks?: boolean,
                 showProgress?: boolean
             };
-            
-            // Check if file exists
-            if (!fs.existsSync(filePath)) {
-                throw new Error(`PDF file not found: ${filePath}`);
-            }
-
-            // Check file size
-            const fileStats = fs.statSync(filePath);
-            const fileSizeMB = fileStats.size / (1024 * 1024);
-            const maxFileSize = options.maxFileSize || 100;
-            
-            if (fileSizeMB > maxFileSize) {
-                throw new Error(`File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
-            }
-            
-            // Read file with memory efficiency for large files
-            const dataBuffer = fs.readFileSync(filePath);
             
             // Check if PDF is encrypted/password protected
             // This is a basic check - pdf-parse will throw a specific error for encrypted PDFs
