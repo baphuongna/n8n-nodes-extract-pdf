@@ -8,6 +8,14 @@ The `n8n-nodes-extract-pdf` node is an n8n node that extracts text from a PDF fi
 
 ## Installation
 
+You can install the package from npm:
+
+```bash
+npm install n8n-nodes-extract-pdf
+```
+
+Alternatively, you can clone the repository and follow these steps:
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/baphuongna/n8n-nodes-extract-pdf.git
@@ -34,9 +42,14 @@ The `n8n-nodes-extract-pdf` node is an n8n node that extracts text from a PDF fi
 
 ## Usage
 
-1. Add the `Extract PDF` node to your n8n workflow.
-2. Configure the node to read a PDF file.
-3. Run the workflow to extract text from the PDF file.
+1. Install the package from npm:
+   ```bash
+   npm install n8n-nodes-extract-pdf
+   ```
+
+2. Add the `Extract PDF` node to your n8n workflow.
+3. Configure the node to read a PDF file.
+4. Run the workflow to extract text from the PDF file.
 
 ## Example
 
