@@ -37,7 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExtractPdfNode = void 0;
 const fs = __importStar(require("fs"));
-const n8n_workflow_1 = require("n8n-workflow");
 const pdf_parse_1 = __importDefault(require("pdf-parse"));
 class ExtractPdfNode {
     constructor() {
@@ -137,26 +136,28 @@ class ExtractPdfNode {
             ],
         };
     }
-    execute(node) {
+    execute() {
         return __awaiter(this, void 0, void 0, function* () {
+            const items = this.getInputData();
+            const returnData = [];
             try {
                 // Get parameters from the node
-                const pdfFile = node.parameters.pdfFile;
+                const pdfFile = this.getNodeParameter('pdfFile', 0);
                 if (!pdfFile || !pdfFile.uri) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, 'No PDF file specified');
+                    throw new Error('No PDF file specified');
                 }
                 const filePath = pdfFile.uri;
-                const options = (node.parameters.options || {});
+                const options = this.getNodeParameter('options', 0, {});
                 // Check if file exists
                 if (!fs.existsSync(filePath)) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, `PDF file not found: ${filePath}`);
+                    throw new Error(`PDF file not found: ${filePath}`);
                 }
                 // Check file size
                 const fileStats = fs.statSync(filePath);
                 const fileSizeMB = fileStats.size / (1024 * 1024);
                 const maxFileSize = options.maxFileSize || 100;
                 if (fileSizeMB > maxFileSize) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, `File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
+                    throw new Error(`File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
                 }
                 // Read file with memory efficiency for large files
                 const dataBuffer = fs.readFileSync(filePath);
@@ -164,7 +165,7 @@ class ExtractPdfNode {
                 // This is a basic check - pdf-parse will throw a specific error for encrypted PDFs
                 const pdfHeader = dataBuffer.slice(0, 100).toString();
                 if (pdfHeader.includes('/Encrypt')) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, 'The PDF file appears to be encrypted or password protected. This node cannot process protected PDFs.');
+                    throw new Error('The PDF file appears to be encrypted or password protected. This node cannot process protected PDFs.');
                 }
                 // Get initial PDF info to determine total page count
                 const initialPdfData = yield (0, pdf_parse_1.default)(dataBuffer, { max: 1 }); // Only parse first page to get document info
@@ -177,14 +178,14 @@ class ExtractPdfNode {
                         // Check if any requested pages exceed the document page count
                         const maxRequestedPage = Math.max(...pageNumbers);
                         if (maxRequestedPage > totalPages) {
-                            throw new n8n_workflow_1.NodeOperationError(this.description.name, node, `Page range includes page ${maxRequestedPage}, but the document only has ${totalPages} page(s)`);
+                            throw new Error(`Page range includes page ${maxRequestedPage}, but the document only has ${totalPages} page(s)`);
                         }
                     }
                     catch (error) {
-                        if (error instanceof n8n_workflow_1.NodeOperationError) {
+                        if (error instanceof Error) {
                             throw error;
                         }
-                        throw new n8n_workflow_1.NodeOperationError(this.description.name, node, `Invalid page range format: ${error.message}`);
+                        throw new Error(`Invalid page range format: ${error.message}`);
                     }
                 }
                 else {
@@ -271,46 +272,46 @@ class ExtractPdfNode {
                             version: initialPdfData.version
                         };
                     }
-                    return [[{ json: output, parameters: {} }]];
+                    returnData.push({ json: output, parameters: {} });
                 }
-                // Prepare output
-                const output = {
-                    text: allText,
-                    performance: {
-                        processingTime: `${processingTimeSec}s`,
-                        pagesProcessed: pageNumbers.length,
-                        pagesPerSecond
-                    }
-                };
-                // Include metadata if requested
-                if (options.includeMetadata) {
-                    output.metadata = {
-                        info: initialPdfData.info,
-                        metadata: initialPdfData.metadata,
-                        numberOfPages: initialPdfData.numpages,
-                        version: initialPdfData.version
+                else {
+                    // Prepare output
+                    const output = {
+                        text: allText,
+                        performance: {
+                            processingTime: `${processingTimeSec}s`,
+                            pagesProcessed: pageNumbers.length,
+                            pagesPerSecond
+                        }
                     };
+                    // Include metadata if requested
+                    if (options.includeMetadata) {
+                        output.metadata = {
+                            info: initialPdfData.info,
+                            metadata: initialPdfData.metadata,
+                            numberOfPages: initialPdfData.numpages,
+                            version: initialPdfData.version
+                        };
+                    }
+                    returnData.push({ json: output, parameters: {} });
                 }
-                // Return data
-                return [[{ json: output, parameters: {} }]];
+                // Return the final result as an array of arrays
+                return [returnData];
             }
             catch (error) {
-                if (error instanceof n8n_workflow_1.NodeOperationError) {
-                    throw error;
-                }
                 // Enhanced error handling for specific PDF errors
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 if (errorMessage.includes('Invalid PDF structure')) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, 'The PDF file has an invalid structure and cannot be processed.');
+                    throw new Error('The PDF file has an invalid structure and cannot be processed.');
                 }
                 else if (errorMessage.includes('password')) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, 'The PDF file is password protected. This node cannot process protected PDFs.');
+                    throw new Error('The PDF file is password protected. This node cannot process protected PDFs.');
                 }
                 else if (errorMessage.includes('Unexpected end of file')) {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, 'The PDF file is truncated or corrupted. Please check the file integrity.');
+                    throw new Error('The PDF file is truncated or corrupted. Please check the file integrity.');
                 }
                 else {
-                    throw new n8n_workflow_1.NodeOperationError(this.description.name, node, `Error extracting text from PDF: ${errorMessage}`);
+                    throw new Error(`Error extracting text from PDF: ${errorMessage}`);
                 }
             }
         });

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { INodeExecutionData, INodeType, INodeTypeDescription, NodeOperationError } from 'n8n-workflow';
+import { INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
 import pdf from 'pdf-parse';
 
 interface PDFOptions {
@@ -107,16 +107,19 @@ export class ExtractPdfNode implements INodeType {
         ],
     };
 
-    async execute(this: any, node: INodeExecutionData): Promise<INodeExecutionData[][]> {
+    async execute(this: any): Promise<INodeExecutionData[][]> {
+        const items = this.getInputData();
+        const returnData: INodeExecutionData[] = [];
+        
         try {
             // Get parameters from the node
-            const pdfFile = node.parameters.pdfFile as { uri: string };
+            const pdfFile = this.getNodeParameter('pdfFile', 0) as { uri: string };
             if (!pdfFile || !pdfFile.uri) {
-                throw new NodeOperationError(this.description.name, node, 'No PDF file specified');
+                throw new Error('No PDF file specified');
             }
             
             const filePath = pdfFile.uri;
-            const options = (node.parameters.options || {}) as PDFOptions & { 
+            const options = this.getNodeParameter('options', 0, {}) as PDFOptions & { 
                 continueOnError?: boolean,
                 processInChunks?: boolean,
                 showProgress?: boolean
@@ -124,11 +127,7 @@ export class ExtractPdfNode implements INodeType {
             
             // Check if file exists
             if (!fs.existsSync(filePath)) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    `PDF file not found: ${filePath}`
-                );
+                throw new Error(`PDF file not found: ${filePath}`);
             }
 
             // Check file size
@@ -137,11 +136,7 @@ export class ExtractPdfNode implements INodeType {
             const maxFileSize = options.maxFileSize || 100;
             
             if (fileSizeMB > maxFileSize) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    `File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`
-                );
+                throw new Error(`File size (${fileSizeMB.toFixed(2)} MB) exceeds the maximum allowed size (${maxFileSize} MB)`);
             }
             
             // Read file with memory efficiency for large files
@@ -151,11 +146,7 @@ export class ExtractPdfNode implements INodeType {
             // This is a basic check - pdf-parse will throw a specific error for encrypted PDFs
             const pdfHeader = dataBuffer.slice(0, 100).toString();
             if (pdfHeader.includes('/Encrypt')) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    'The PDF file appears to be encrypted or password protected. This node cannot process protected PDFs.'
-                );
+                throw new Error('The PDF file appears to be encrypted or password protected. This node cannot process protected PDFs.');
             }
             
             // Get initial PDF info to determine total page count
@@ -170,21 +161,13 @@ export class ExtractPdfNode implements INodeType {
                     // Check if any requested pages exceed the document page count
                     const maxRequestedPage = Math.max(...pageNumbers);
                     if (maxRequestedPage > totalPages) {
-                        throw new NodeOperationError(
-                            this.description.name,
-                            node,
-                            `Page range includes page ${maxRequestedPage}, but the document only has ${totalPages} page(s)`
-                        );
+                        throw new Error(`Page range includes page ${maxRequestedPage}, but the document only has ${totalPages} page(s)`);
                     }
                 } catch (error) {
-                    if (error instanceof NodeOperationError) {
+                    if (error instanceof Error) {
                         throw error;
                     }
-                    throw new NodeOperationError(
-                        this.description.name, 
-                        node,
-                        `Invalid page range format: ${(error as Error).message}`
-                    );
+                    throw new Error(`Invalid page range format: ${(error as Error).message}`);
                 }
             } else {
                 // If no specific pages requested, process all pages
@@ -282,64 +265,45 @@ export class ExtractPdfNode implements INodeType {
                     };
                 }
                 
-                return [[{ json: output, parameters: {} }]];
-            }
-            
-            // Prepare output
-            const output: any = { 
-                text: allText,
-                performance: {
-                    processingTime: `${processingTimeSec}s`,
-                    pagesProcessed: pageNumbers.length,
-                    pagesPerSecond
-                }
-            };
-            
-            // Include metadata if requested
-            if (options.includeMetadata) {
-                output.metadata = {
-                    info: initialPdfData.info,
-                    metadata: initialPdfData.metadata,
-                    numberOfPages: initialPdfData.numpages,
-                    version: initialPdfData.version
+                returnData.push({ json: output, parameters: {} });
+            } else {
+                // Prepare output
+                const output: any = { 
+                    text: allText,
+                    performance: {
+                        processingTime: `${processingTimeSec}s`,
+                        pagesProcessed: pageNumbers.length,
+                        pagesPerSecond
+                    }
                 };
+                
+                // Include metadata if requested
+                if (options.includeMetadata) {
+                    output.metadata = {
+                        info: initialPdfData.info,
+                        metadata: initialPdfData.metadata,
+                        numberOfPages: initialPdfData.numpages,
+                        version: initialPdfData.version
+                    };
+                }
+                
+                returnData.push({ json: output, parameters: {} });
             }
             
-            // Return data
-            return [[{ json: output, parameters: {} }]];
-            
+            // Return the final result as an array of arrays
+            return [returnData];
         } catch (error) {
-            if (error instanceof NodeOperationError) {
-                throw error;
-            }
-            
             // Enhanced error handling for specific PDF errors
             const errorMessage = error instanceof Error ? error.message : String(error);
             
             if (errorMessage.includes('Invalid PDF structure')) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    'The PDF file has an invalid structure and cannot be processed.'
-                );
+                throw new Error('The PDF file has an invalid structure and cannot be processed.');
             } else if (errorMessage.includes('password')) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    'The PDF file is password protected. This node cannot process protected PDFs.'
-                );
+                throw new Error('The PDF file is password protected. This node cannot process protected PDFs.');
             } else if (errorMessage.includes('Unexpected end of file')) {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    'The PDF file is truncated or corrupted. Please check the file integrity.'
-                );
+                throw new Error('The PDF file is truncated or corrupted. Please check the file integrity.');
             } else {
-                throw new NodeOperationError(
-                    this.description.name,
-                    node,
-                    `Error extracting text from PDF: ${errorMessage}`
-                );
+                throw new Error(`Error extracting text from PDF: ${errorMessage}`);
             }
         }
     }

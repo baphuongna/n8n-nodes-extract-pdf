@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^22.13.11",
     "@types/pdf-parse": "^1.1.4",
+    "n8n-workflow": "^1.82.0",
     "typescript": "^4.0.0"
   },
   "keywords": [
