@@ -1,24 +1,23 @@
 {
   "name": "n8n-nodes-extract-pdf",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "n8n node to extract text from PDF",
-  "main": "dist/ExtractPdfNode.js",
-  "types": "dist/ExtractPdfNode.d.ts",
+  "main": "nodes/ExtractPdfNode/ExtractPdfNode.js",
+  "types": "nodes/ExtractPdfNode/ExtractPdfNode.d.ts",
   "n8n": {
     "nodes": [
       {
         "name": "ExtractPdfNode",
         "class": "ExtractPdfNode",
-        "file": "./dist/ExtractPdfNode.js"
+        "file": "nodes/ExtractPdfNode/ExtractPdfNode.js"
       }
     ]
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/ExtractPdfNode.js"
+    "start": "node nodes/ExtractPdfNode/ExtractPdfNode.js"
   },
   "dependencies": {
-    "n8n-nodes-extract-pdf": "file:",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1"
   },
@@ -26,5 +25,18 @@
     "@types/node": "^22.13.11",
     "@types/pdf-parse": "^1.1.4",
     "typescript": "^4.0.0"
+  },
+  "keywords": [
+    "n8n",
+    "n8n-node",
+    "pdf",
+    "extract",
+    "text"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/n8n-nodes-extract-pdf"
   }
 }

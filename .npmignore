@@ -1,0 +1,11 @@
+# Thư mục và tệp không nên đưa vào gói npm
+.git/
+.github/
+.gitignore
+.cursor/
+memory-bank/
+tests/
+src/
+tsconfig.json
+.DS_Store
+*.log 
