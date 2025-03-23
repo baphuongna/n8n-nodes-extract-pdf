@@ -1,0 +1,19 @@
+{
+  "name": "n8n-nodes-extract-pdf",
+  "version": "1.0.0",
+  "description": "n8n node to extract text from PDF",
+  "main": "src/ExtractPdfNode.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/ExtractPdfNode.js"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.11",
+    "@types/pdf-parse": "^1.1.4",
+    "typescript": "^4.0.0"
+  }
+}
