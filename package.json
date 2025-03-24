@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-extract-pdf",
-  "version": "1.0.18",
-  "description": "n8n node to extract text, images and tables from PDF with multilingual support and language detection",
+  "version": "1.0.21",
+  "description": "n8n node to extract text, images and tables from PDF with multilingual support, language detection and comprehensive test suite",
   "keywords": [
     "n8n",
     "pdf",
@@ -15,7 +15,9 @@
     "pdf-processing",
     "document-processing",
     "multilingual",
-    "language-detection"
+    "language-detection",
+    "testing",
+    "test-suite"
   ],
   "license": "MIT",
   "homepage": "https://n8n.io",
@@ -28,7 +30,10 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
-    "start": "node nodes/ExtractPdfNode/ExtractPdfNode.js"
+    "start": "node nodes/ExtractPdfNode/ExtractPdfNode.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "files": [
     "dist",
@@ -41,21 +46,23 @@
     ]
   },
   "dependencies": {
-    "franc": "^6.2.0",
-    "iso-639-3": "^3.0.1",
-    "natural": "^8.0.1",
-    "pdf-img-convert": "^2.0.0",
-    "pdf-lib": "^1.17.1",
+    "natural": "^6.5.0",
+    "pdf-img-convert": "^1.2.1",
     "pdf-parse": "^1.1.1",
     "pdf-table-extractor": "^1.0.3",
-    "sharp": "^0.33.5",
-    "tesseract.js": "^6.0.0"
+    "semver": "^7.5.4",
+    "sharp": "^0.32.6",
+    "tesseract.js": "^4.1.1"
   },
   "devDependencies": {
-    "@types/node": "^22.13.11",
-    "@types/pdf-parse": "^1.1.4",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^18.16.0",
+    "@types/pdf-parse": "^1.1.1",
     "@types/sharp": "^0.32.0",
-    "n8n-workflow": "^1.82.0",
-    "typescript": "^4.0.0"
+    "jest": "^29.7.0",
+    "n8n-workflow": "~1.17.0",
+    "pdfkit": "^0.16.0",
+    "ts-jest": "^29.2.6",
+    "typescript": "~4.6.0"
   }
 }

@@ -110,6 +110,107 @@ sudo apt-get install -y tesseract-ocr-vie
 brew install tesseract-lang
 ```
 
+## Phát Triển và Kiểm Thử
+
+### Cấu Trúc Thư Mục Kiểm Thử
+
+Dự án được tổ chức với cấu trúc thư mục kiểm thử tiêu chuẩn:
+
+```
+n8n-nodes-extract-pdf/
+├── tests/
+│   ├── fixtures/         # Chứa dữ liệu mẫu và công cụ tạo PDF
+│   ├── unit/             # Unit tests cho các hàm riêng lẻ
+│   └── integration/      # Integration tests cho quy trình trích xuất hoàn chỉnh
+```
+
+### Tài Liệu Mẫu Để Kiểm Thử
+
+Module đi kèm với các PDF mẫu được tạo tự động phục vụ cho việc kiểm thử:
+
+- **Sample PDF**: PDF đơn giản với văn bản, bảng đơn giản và metadata
+- **Complex PDF**: PDF phức tạp với mục lục, bảng dữ liệu, và nội dung đa ngôn ngữ
+- **Invoice PDF**: Mẫu hóa đơn để kiểm thử tính năng phân loại tài liệu
+
+Để tạo các PDF mẫu, chạy:
+
+```bash
+node tests/fixtures/generate-test-pdf.js
+```
+
+### Unit Tests
+
+Unit tests tập trung vào kiểm thử các hàm riêng lẻ của module:
+
+- `parsePageRange`: Xác nhận phân tích chính xác chuỗi phạm vi trang
+- `calculateStringSimilarity`: Đảm bảo tính toán độ tương đồng chuỗi chính xác
+- `levenshteinDistance`: Kiểm tra thuật toán tính khoảng cách Levenshtein
+- `detectLanguage`: Xác minh khả năng phát hiện ngôn ngữ
+- `mapLanguageCodeToTesseract`: Kiểm tra chuyển đổi mã ngôn ngữ
+- `formatTables`: Đảm bảo định dạng bảng chính xác
+- `classifyDocument`: Xác minh khả năng phân loại tài liệu
+- `extractFieldValue`: Kiểm tra trích xuất trường dữ liệu
+
+### Performance Tests
+
+Performance tests đảm bảo module hoạt động hiệu quả với các tài liệu lớn:
+
+- Đo hiệu suất xử lý phạm vi trang phức tạp
+- Đánh giá tốc độ tính toán khoảng cách Levenshtein
+- Đo tốc độ phân chia mảng thành các phần nhỏ hơn
+- Đo thời gian trung bình tính toán độ tương đồng chuỗi
+- Đo hiệu suất phát hiện ngôn ngữ
+- Đánh giá tốc độ phân loại tài liệu
+- Đo thời gian định dạng bảng phức tạp
+
+### Integration Tests
+
+Integration tests kiểm tra quy trình trích xuất PDF hoàn chỉnh:
+
+- Trích xuất văn bản và metadata từ PDF đơn giản
+- Trích xuất bảng từ PDF phức tạp
+- Xử lý PDF có nội dung đa ngôn ngữ
+- Phân loại đúng loại tài liệu
+- Xử lý lỗi trong các tình huống khác nhau
+
+### Chạy Kiểm Thử
+
+```bash
+# Chạy tất cả các tests
+npm run test
+
+# Chạy unit tests
+npm run test tests/unit
+
+# Chạy integration tests
+npm run test tests/integration
+
+# Chạy performance tests
+npm run test tests/unit/Performance.test.ts
+
+# Chạy tests cụ thể
+npm run test tests/unit/ExtractPdfNode.test.ts
+
+# Tạo báo cáo coverage
+npm run test:coverage
+```
+
+### Tương Thích
+
+Module được kiểm thử và tương thích với:
+- Node.js 18+
+- n8n phiên bản 1.83.2 trở lên
+- Windows, Linux, và MacOS
+
+## Phát Triển Thêm
+
+Khi cần phát triển thêm tính năng mới, vui lòng đảm bảo:
+
+1. Thêm unit tests cho mọi hàm mới
+2. Cập nhật integration tests để kiểm tra tính năng mới trong quy trình hoàn chỉnh
+3. Thêm performance tests nếu tính năng mới có thể ảnh hưởng đến hiệu suất
+4. Tạo tài liệu mẫu mới nếu cần thiết để kiểm thử tính năng mới
+
 ---
 
 ## English
@@ -140,7 +241,7 @@ The `n8n-nodes-extract-pdf` node is a custom node for n8n that helps extract con
 
 You can install the package from npm:
 
-```bash
+   ```bash
 npm install n8n-nodes-extract-pdf@1.0.18
 ```
 

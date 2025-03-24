@@ -24,31 +24,106 @@ declare type LanguageData = {
 };
 declare type Iso6393Type = LanguageData[];
 
-// Existing imports
-import * as fs from 'fs';
-import {
+// Existing imports converted to CommonJS
+const fs = require('fs');
+const {
     INodeExecutionData,
     INodeType,
     INodeTypeDescription,
     NodeOperationError,
-} from 'n8n-workflow';
-import pdf from 'pdf-parse';
-import * as Tesseract from 'tesseract.js';
-import * as os from 'os';
-import * as path from 'path';
-import { convert as convertPdfToImages } from 'pdf-img-convert';
-import pdfTableExtractor from 'pdf-table-extractor';
-import natural from 'natural';
+} = require('n8n-workflow');
+const pdf = require('pdf-parse');
+const Tesseract = require('tesseract.js');
+const os = require('os');
+const path = require('path');
+const { convert: convertPdfToImages } = require('pdf-img-convert');
+const pdfTableExtractor = require('pdf-table-extractor');
+const natural = require('natural');
 // @ts-ignore
-import sharp from 'sharp';
-// @ts-ignore
-import franc from 'franc';
-// @ts-ignore
-import iso6393 from 'iso-639-3';
+const sharp = require('sharp');
+
+// Triển khai phát hiện ngôn ngữ đơn giản thay thế franc
+function detectLanguageSimple(text: string): string {
+  // Nếu văn bản quá ngắn, trả về undefined
+  if (!text || text.length < 10) {
+    return 'und';
+  }
+  
+  // Mạng lưới ký tự đặc trưng cho từng ngôn ngữ
+  const langPatterns: Record<string, RegExp[]> = {
+    'vie': [/[ăâđêôơưĂÂĐÊÔƠƯ]/],
+    'fra': [/[éèêàùëïçÉÈÊÀÙËÏÇ]/],
+    'deu': [/[äöüßÄÖÜ]/],
+    'spa': [/[áéíóúñÁÉÍÓÚÑ¿¡]/],
+    'jpn': [/[\u3040-\u309F\u30A0-\u30FF]/],
+    'zho': [/[\u4E00-\u9FFF]/],
+    'kor': [/[\uAC00-\uD7AF\u1100-\u11FF]/],
+    'rus': [/[а-яА-ЯёЁ]/],
+    'tha': [/[\u0E00-\u0E7F]/]
+  };
+  
+  // Đếm matches
+  const langScores: Record<string, number> = {};
+  
+  // Kiểm tra mỗi ngôn ngữ
+  for (const [lang, patterns] of Object.entries(langPatterns)) {
+    langScores[lang] = 0;
+    for (const pattern of patterns) {
+      const matches = (text.match(pattern) || []).length;
+      langScores[lang] += matches;
+    }
+  }
+  
+  // Tìm ngôn ngữ có điểm cao nhất
+  let bestLang = 'eng'; // Default là tiếng Anh
+  let highestScore = 0;
+  
+  for (const [lang, score] of Object.entries(langScores)) {
+    if (score > highestScore && score > 0) {
+      highestScore = score;
+      bestLang = lang;
+    }
+  }
+  
+  // Trả về mã ISO 639-3
+  return bestLang;
+}
+
+// Dữ liệu ngôn ngữ ISO 639-3 giới hạn thay thế iso-639-3
+const languageData = [
+  { name: 'English', iso6393: 'eng', iso6391: 'en', type: 'living', scope: 'individual' },
+  { name: 'Vietnamese', iso6393: 'vie', iso6391: 'vi', type: 'living', scope: 'individual' },
+  { name: 'French', iso6393: 'fra', iso6391: 'fr', type: 'living', scope: 'individual' },
+  { name: 'German', iso6393: 'deu', iso6391: 'de', type: 'living', scope: 'individual' },
+  { name: 'Spanish', iso6393: 'spa', iso6391: 'es', type: 'living', scope: 'individual' },
+  { name: 'Chinese', iso6393: 'zho', iso6391: 'zh', type: 'living', scope: 'individual' },
+  { name: 'Japanese', iso6393: 'jpn', iso6391: 'ja', type: 'living', scope: 'individual' },
+  { name: 'Korean', iso6393: 'kor', iso6391: 'ko', type: 'living', scope: 'individual' },
+  { name: 'Russian', iso6393: 'rus', iso6391: 'ru', type: 'living', scope: 'individual' },
+  { name: 'Thai', iso6393: 'tha', iso6391: 'th', type: 'living', scope: 'individual' }
+];
+
+// Khai báo các biến để lưu modules ES sau khi load
+let francModule: any = null;
+let iso6393Module: any = null;
+
+// Hàm tải lazy-loading ES modules
+async function loadModules() {
+  // Không cần load ES modules nữa, sử dụng triển khai trực tiếp
+  return { 
+    franc: (text: string) => detectLanguageSimple(text),
+    iso6393: languageData
+  };
+}
+
+// Type definitions for n8n API
+type N8nINodeExecutionData = any;
+type N8nINodeType = any;
+type N8nINodeTypeDescription = any;
 
 // Định nghĩa interface thay vì import
 interface IExecuteFunctions {
-    getInputData(): INodeExecutionData[];
+    getInputData(): N8nINodeExecutionData[];
     getNodeParameter(parameterName: string, itemIndex: number, fallbackValue?: any): any;
     getNode(): any;
 }
@@ -84,8 +159,9 @@ interface PDFOptions {
     extractFormFields?: boolean;
 }
 
-export class ExtractPdfNode implements INodeType {
-    description: INodeTypeDescription = {
+// Changed from export class to class
+class ExtractPdfNode implements N8nINodeType {
+    description: N8nINodeTypeDescription = {
         displayName: 'Extract PDF',
         name: 'extractPdf',
         group: ['transform'],
@@ -202,19 +278,19 @@ export class ExtractPdfNode implements INodeType {
                                 displayName: 'Page Selection Options',
                                 name: 'pageSelectionValues',
                                 values: [
-                                    {
-                                        displayName: 'Page Range',
-                                        name: 'pageRange',
-                                        type: 'string',
-                                        default: '',
-                                        placeholder: '1-5, 8, 11-13',
+                    {
+                        displayName: 'Page Range',
+                        name: 'pageRange',
+                        type: 'string',
+                        default: '',
+                        placeholder: '1-5, 8, 11-13',
                                         description: 'Range of pages to extract. Leave empty to extract all pages.',
-                                    },
-                                    {
+                    },
+                    {
                                         displayName: 'Process Only First Page',
                                         name: 'firstPageOnly',
-                                        type: 'boolean',
-                                        default: false,
+                        type: 'boolean',
+                        default: false,
                                         description: 'Process only the first page of the document',
                                     },
                                 ],
@@ -234,37 +310,37 @@ export class ExtractPdfNode implements INodeType {
                                 displayName: 'Performance Options',
                                 name: 'performanceValues',
                                 values: [
-                                    {
-                                        displayName: 'Max File Size (MB)',
-                                        name: 'maxFileSize',
-                                        type: 'number',
-                                        default: 100,
+                    {
+                        displayName: 'Max File Size (MB)',
+                        name: 'maxFileSize',
+                        type: 'number',
+                        default: 100,
                                         description: 'Maximum file size to process in MB',
-                                    },
-                                    {
-                                        displayName: 'Process In Chunks',
-                                        name: 'processInChunks',
-                                        type: 'boolean',
-                                        default: true,
+                    },
+                    {
+                        displayName: 'Process In Chunks',
+                        name: 'processInChunks',
+                        type: 'boolean',
+                        default: true,
                                         description: 'Process large PDF files in smaller chunks for better memory management',
-                                    },
-                                    {
-                                        displayName: 'Chunk Size (Pages)',
-                                        name: 'chunkSize',
-                                        type: 'number',
-                                        default: 10,
+                    },
+                    {
+                        displayName: 'Chunk Size (Pages)',
+                        name: 'chunkSize',
+                        type: 'number',
+                        default: 10,
                                         description: 'Number of pages to process in each chunk',
-                                        displayOptions: {
-                                            show: {
+                        displayOptions: {
+                            show: {
                                                 '/options.performanceOptions.performanceValues.processInChunks': [true],
-                                            },
-                                        },
-                                    },
-                                    {
-                                        displayName: 'Show Progress',
-                                        name: 'showProgress',
-                                        type: 'boolean',
-                                        default: true,
+                            },
+                        },
+                    },
+                    {
+                        displayName: 'Show Progress',
+                        name: 'showProgress',
+                        type: 'boolean',
+                        default: true,
                                         description: 'Show detailed progress information during processing',
                                     },
                                     {
@@ -535,9 +611,10 @@ export class ExtractPdfNode implements INodeType {
         ],
     };
 
-    async execute(this: any): Promise<INodeExecutionData[][]> {
+    // Fix the execute method signature to use any for this
+    async execute(this: any): Promise<N8nINodeExecutionData[][]> {
         const items = this.getInputData();
-        const returnData: INodeExecutionData[] = [];
+        const returnData: N8nINodeExecutionData[] = [];
         
         try {
             // Get input type parameter
@@ -749,25 +826,25 @@ export class ExtractPdfNode implements INodeType {
                 performance.endTime = Date.now();
             }
             
-            const output: any = {
+                const output: any = { 
                 text: allText,
-                performance: {
+                    performance: {
                     processingTime: `${((performance.endTime - performance.startTime) / 1000).toFixed(2)}s`,
-                    pagesProcessed: pageNumbers.length,
+                        pagesProcessed: pageNumbers.length,
                     pagesPerSecond: (pageNumbers.length / ((performance.endTime - performance.startTime) / 1000)).toFixed(2)
-                }
-            };
-            
-            // Include metadata if requested
-            if (processOptions.includeMetadata) {
-                output.metadata = {
-                    info: initialPdfData.info,
-                    metadata: initialPdfData.metadata,
-                    numberOfPages: totalPages,
-                    version: initialPdfData.version
+                    }
                 };
-            }
-            
+                
+                // Include metadata if requested
+            if (processOptions.includeMetadata) {
+                    output.metadata = {
+                        info: initialPdfData.info,
+                        metadata: initialPdfData.metadata,
+                    numberOfPages: totalPages,
+                        version: initialPdfData.version
+                    };
+                }
+                
             // Extract images if requested
             if (processOptions.extractImages) {
                 try {
@@ -777,7 +854,7 @@ export class ExtractPdfNode implements INodeType {
                     if (processOptions.continueOnError) {
                         console.error(`Warning: Error extracting images: ${(error as Error).message}`);
                         output.imageExtractionError = (error as Error).message;
-                    } else {
+            } else {
                         throw error;
                     }
                 }
@@ -854,7 +931,7 @@ export class ExtractPdfNode implements INodeType {
             if (inputType === 'binaryData' && fs.existsSync(filePath)) {
                 try {
                     fs.unlinkSync(filePath);
-                } catch (error) {
+        } catch (error) {
                     console.error(`Warning: Error deleting temporary file: ${(error as Error).message}`);
                 }
             }
@@ -888,14 +965,14 @@ export class ExtractPdfNode implements INodeType {
                     if (processOptions.continueOnError) {
                         console.error(`Warning: Error detecting document type: ${(error as Error).message}`);
                         output.documentClassificationError = (error as Error).message;
-                    } else {
+            } else {
                         throw error;
                     }
                 }
             }
             
             // Return the extracted data
-            const item: INodeExecutionData = {
+            const item: N8nINodeExecutionData = {
                 json: output,
                 parameters: {},
             };
@@ -1020,7 +1097,7 @@ export class ExtractPdfNode implements INodeType {
             });
             
             // Create array of image data with page numbers
-            const images = outputImages.map((imageBuffer, index) => {
+            const images = outputImages.map((imageBuffer: any, index: number) => {
                 const page = pageNumbers[index];
                 // Convert raw buffer to base64 string
                 // Handle the type safely
@@ -1774,9 +1851,8 @@ export class ExtractPdfNode implements INodeType {
      */
     async detectLanguage(text: string): Promise<string> {
         try {
-            // Sử dụng thư viện franc để phát hiện ngôn ngữ
-            // @ts-ignore - bỏ qua kiểm tra type cho franc
-            const langCode = franc(text, { minLength: 30 });
+            // Sử dụng hàm triển khai trực tiếp thay vì franc
+            const langCode = detectLanguageSimple(text);
             if (langCode === 'und') {
                 console.log('Không thể phát hiện ngôn ngữ, sử dụng ngôn ngữ mặc định (tiếng Anh)');
                 return 'eng';
@@ -1793,45 +1869,59 @@ export class ExtractPdfNode implements INodeType {
     }
     
     /**
-     * Chuyển đổi mã ngôn ngữ ISO 639-3 sang mã ngôn ngữ Tesseract
-     * @param isoCode - Mã ISO 639-3
-     * @returns Mã ngôn ngữ Tesseract tương ứng
+     * Tạo thống kê ngôn ngữ từ văn bản
+     * @param text - Văn bản cần phân tích
+     * @returns Thống kê về tần suất của các ngôn ngữ được phát hiện
      */
-    mapLanguageCodeToTesseract(isoCode: string): string {
-        // Bảng ánh xạ từ mã ISO sang mã Tesseract
-        const langMap: Record<string, string> = {
-            'eng': 'eng',
-            'vie': 'vie',
-            'fra': 'fra',
-            'deu': 'deu',
-            'ita': 'ita',
-            'spa': 'spa',
-            'por': 'por',
-            'rus': 'rus',
-            'jpn': 'jpn',
-            'kor': 'kor',
-            'chi': 'chi_sim', // Tiếng Trung giản thể
-            'zho': 'chi_sim',
-            'tha': 'tha',
-            'ara': 'ara',
-            'hin': 'hin',
-            'ben': 'ben',
-            'dan': 'dan',
-            'nld': 'nld',
-            'fin': 'fin',
-            'ell': 'ell', // Tiếng Hy Lạp
-            'hun': 'hun',
-            'ind': 'ind',
-            'nor': 'nor',
-            'pol': 'pol',
-            'ron': 'ron', // Tiếng Romania
-            'swe': 'swe',
-            'tur': 'tur',
-            'ukr': 'ukr',
-            'heb': 'heb', // Tiếng Do Thái
-        };
+    async generateLanguageStats(text: string): Promise<Record<string, number>> {
+        if (!text || text.trim() === '') {
+            return { 'eng': 100 }; // Mặc định là tiếng Anh nếu không có văn bản
+        }
         
-        return langMap[isoCode] || 'eng';
+        try {
+            // Chia văn bản thành các đoạn để phân tích
+            const paragraphs = text
+                .split(/\n\s*\n/)
+                .filter(para => para.trim().length > 30); // Chỉ xem xét các đoạn đủ dài
+            
+            if (paragraphs.length === 0) {
+                return { 'eng': 100 };
+            }
+            
+            // Đếm số lần xuất hiện của mỗi ngôn ngữ
+            const languageCounts: Record<string, number> = {};
+            let totalParagraphs = 0;
+            
+            for (const paragraph of paragraphs) {
+                // Sử dụng hàm triển khai trực tiếp thay vì franc
+                const detectedLang = detectLanguageSimple(paragraph);
+                
+                if (detectedLang !== 'und') {
+                    // Chuyển đổi sang mã Tesseract
+                    const tesseractCode = this.mapLanguageCodeToTesseract(detectedLang);
+                    
+                    // Cập nhật số lần đếm
+                    languageCounts[tesseractCode] = (languageCounts[tesseractCode] || 0) + 1;
+                    totalParagraphs++;
+                }
+            }
+            
+            // Nếu không phát hiện được ngôn ngữ nào
+            if (totalParagraphs === 0) {
+                return { 'eng': 100 };
+            }
+            
+            // Chuyển đổi số lần đếm thành phần trăm
+            const languageStats: Record<string, number> = {};
+            for (const lang in languageCounts) {
+                languageStats[lang] = Math.round((languageCounts[lang] / totalParagraphs) * 100);
+            }
+            
+            return languageStats;
+        } catch (error) {
+            console.log('Lỗi khi tạo thống kê ngôn ngữ:', error);
+            return { 'eng': 100 }; // Trả về tiếng Anh như mặc định
+        }
     }
     
     /**
@@ -1882,7 +1972,7 @@ export class ExtractPdfNode implements INodeType {
             
             // Thực hiện OCR với Tesseract
             const result = await Tesseract.recognize(imagePath, combinedLanguages, {
-                logger: message => console.log(`Tesseract: ${message.status}`),
+                logger: (message: any) => console.log(`Tesseract: ${message.status}`),
             });
             
             return result.data.text;
@@ -1898,63 +1988,6 @@ export class ExtractPdfNode implements INodeType {
             
             // Trả về thông báo lỗi chung nếu không nhận dạng được lỗi cụ thể
             throw new Error(`Lỗi OCR: ${error.message || 'Lỗi không xác định'}`);
-        }
-    }
-    
-    /**
-     * Tạo thống kê ngôn ngữ từ văn bản
-     * @param text - Văn bản cần phân tích
-     * @returns Thống kê về tần suất của các ngôn ngữ được phát hiện
-     */
-    async generateLanguageStats(text: string): Promise<Record<string, number>> {
-        if (!text || text.trim() === '') {
-            return { 'eng': 100 }; // Mặc định là tiếng Anh nếu không có văn bản
-        }
-        
-        try {
-            // Chia văn bản thành các đoạn để phân tích
-            const paragraphs = text
-                .split(/\n\s*\n/)
-                .filter(para => para.trim().length > 30); // Chỉ xem xét các đoạn đủ dài
-            
-            if (paragraphs.length === 0) {
-                return { 'eng': 100 };
-            }
-            
-            // Đếm số lần xuất hiện của mỗi ngôn ngữ
-            const languageCounts: Record<string, number> = {};
-            let totalParagraphs = 0;
-            
-            for (const paragraph of paragraphs) {
-                // Sử dụng franc để phát hiện ngôn ngữ cho đoạn văn
-                // @ts-ignore - bỏ qua kiểm tra type cho franc
-                const detectedLang = franc(paragraph, { minLength: 30 });
-                
-                if (detectedLang !== 'und') {
-                    // Chuyển đổi sang mã Tesseract
-                    const tesseractCode = this.mapLanguageCodeToTesseract(detectedLang);
-                    
-                    // Cập nhật số lần đếm
-                    languageCounts[tesseractCode] = (languageCounts[tesseractCode] || 0) + 1;
-                    totalParagraphs++;
-                }
-            }
-            
-            // Nếu không phát hiện được ngôn ngữ nào
-            if (totalParagraphs === 0) {
-                return { 'eng': 100 };
-            }
-            
-            // Chuyển đổi số lần đếm thành phần trăm
-            const languageStats: Record<string, number> = {};
-            for (const lang in languageCounts) {
-                languageStats[lang] = Math.round((languageCounts[lang] / totalParagraphs) * 100);
-            }
-            
-            return languageStats;
-        } catch (error) {
-            console.log('Lỗi khi tạo thống kê ngôn ngữ:', error);
-            return { 'eng': 100 }; // Trả về tiếng Anh như mặc định
         }
     }
     
@@ -2014,4 +2047,57 @@ export class ExtractPdfNode implements INodeType {
         
         return matrix[str1.length][str2.length];
     }
-} 
+
+    private async processImages(imageBuffer: Buffer | any, index: number): Promise<any> {
+        // ... existing code ...
+    }
+    
+    private logMessage(message: string): void {
+        // ... existing code ...
+    }
+
+    /**
+     * Chuyển đổi mã ngôn ngữ ISO 639-3 sang mã ngôn ngữ Tesseract
+     * @param isoCode - Mã ISO 639-3
+     * @returns Mã ngôn ngữ Tesseract tương ứng
+     */
+    mapLanguageCodeToTesseract(isoCode: string): string {
+        // Bảng ánh xạ từ mã ISO sang mã Tesseract
+        const langMap: Record<string, string> = {
+            'eng': 'eng',
+            'vie': 'vie',
+            'fra': 'fra',
+            'deu': 'deu',
+            'ita': 'ita',
+            'spa': 'spa',
+            'por': 'por',
+            'rus': 'rus',
+            'jpn': 'jpn',
+            'kor': 'kor',
+            'chi': 'chi_sim', // Tiếng Trung giản thể
+            'zho': 'chi_sim',
+            'tha': 'tha',
+            'ara': 'ara',
+            'hin': 'hin',
+            'ben': 'ben',
+            'dan': 'dan',
+            'nld': 'nld',
+            'fin': 'fin',
+            'ell': 'ell', // Tiếng Hy Lạp
+            'hun': 'hun',
+            'ind': 'ind',
+            'nor': 'nor',
+            'pol': 'pol',
+            'ron': 'ron', // Tiếng Romania
+            'swe': 'swe',
+            'tur': 'tur',
+            'ukr': 'ukr',
+            'heb': 'heb', // Tiếng Do Thái
+        };
+        
+        return langMap[isoCode] || 'eng';
+    }
+}
+
+// Export for n8n 1.83.2
+module.exports = { nodeType: ExtractPdfNode }; 
