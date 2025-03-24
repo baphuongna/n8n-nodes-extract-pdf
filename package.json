@@ -1,22 +1,31 @@
 {
   "name": "n8n-nodes-extract-pdf",
-  "version": "1.0.15",
-  "description": "n8n node to extract text from PDF",
+  "version": "1.0.18",
+  "description": "n8n node to extract text, images and tables from PDF with multilingual support and language detection",
   "keywords": [
     "n8n",
-    "n8n-node",
     "pdf",
     "extract",
-    "text"
+    "ocr",
+    "tesseract",
+    "text-extraction",
+    "pdf-parser",
+    "tables",
+    "images",
+    "pdf-processing",
+    "document-processing",
+    "multilingual",
+    "language-detection"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/yourusername/n8n-nodes-extract-pdf",
-  "author": "Your Name",
+  "homepage": "https://n8n.io",
+  "author": "Created by AI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/n8n-nodes-extract-pdf"
+    "url": "https://github.com/n8n-io/n8n-nodes-extract-pdf.git"
   },
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "start": "node nodes/ExtractPdfNode/ExtractPdfNode.js"
@@ -32,13 +41,20 @@
     ]
   },
   "dependencies": {
-    "n8n-nodes-extract-pdf": "file:",
+    "franc": "^6.2.0",
+    "iso-639-3": "^3.0.1",
+    "natural": "^8.0.1",
+    "pdf-img-convert": "^2.0.0",
     "pdf-lib": "^1.17.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "pdf-table-extractor": "^1.0.3",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.11",
     "@types/pdf-parse": "^1.1.4",
+    "@types/sharp": "^0.32.0",
     "n8n-workflow": "^1.82.0",
     "typescript": "^4.0.0"
   }

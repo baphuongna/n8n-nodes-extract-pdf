@@ -1,225 +1,212 @@
 # n8n-nodes-extract-pdf
+*Created by AI*
 
-Node n8n này trích xuất văn bản từ tệp PDF với nhiều tùy chọn mạnh mẽ.
+Node tùy chỉnh cho n8n để trích xuất văn bản, hình ảnh và bảng từ tệp PDF với hỗ trợ đa ngôn ngữ.
 
-## Mô tả
+## Tính Năng
 
-Node `n8n-nodes-extract-pdf` là một node tùy chỉnh cho n8n giúp trích xuất nội dung văn bản từ tệp PDF. Node này sử dụng thư viện `pdf-parse` để phân tích và trích xuất nội dung văn bản từ tệp PDF.
+- ✅ Trích xuất văn bản từ PDF thông thường và PDF dạng ảnh
+- ✅ OCR (Nhận dạng ký tự quang học) cho các PDF dạng scan
+- ✅ Xử lý PDF đa ngôn ngữ với tự động phát hiện ngôn ngữ
+- ✅ Tạo thống kê phân bố ngôn ngữ trong tài liệu
+- ✅ Trích xuất và xử lý bảng
+- ✅ Trích xuất hình ảnh từ PDF
+- ✅ Nhận diện loại tài liệu tự động
+- ✅ Trích xuất metadata và thông tin tệp
+- ✅ Xử lý hiệu quả tệp PDF lớn
 
-### Tính năng chính
+## Phiên Bản Mới (v1.0.18)
 
-- Trích xuất văn bản từ toàn bộ PDF
-- Trích xuất văn bản từ các trang cụ thể (ví dụ: "1-5, 8, 11-13")
-- Trích xuất metadata của tệp PDF
-- Kiểm soát kích thước tệp tối đa có thể xử lý
-- Xử lý lỗi chi tiết cho các loại PDF khác nhau
-- Xử lý hiệu quả các tệp PDF lớn bằng cách chia thành các phần nhỏ
-- Hỗ trợ theo dõi tiến trình cho các tệp lớn
-- Báo cáo hiệu suất với thời gian xử lý và tốc độ
+Chúng tôi vừa phát hành phiên bản mới với các tính năng đa ngôn ngữ:
 
-## Cài đặt
+1. **Hỗ trợ đa ngôn ngữ**: Tự động phát hiện và xử lý nhiều ngôn ngữ trong cùng một tài liệu
+2. **Thống kê ngôn ngữ**: Tạo báo cáo thống kê về phân bố ngôn ngữ trong tài liệu
+3. **Cải thiện OCR**: Tối ưu hóa quá trình OCR cho từng ngôn ngữ phát hiện được
+4. **Tăng cường hình ảnh**: Cải thiện chất lượng OCR thông qua xử lý hình ảnh
 
-Bạn có thể cài đặt gói từ npm:
+<div align="center">
+  <img src="https://n8n.io/n8n-logo.png" alt="Extract PDF Node Logo" width="125" height="125">
+</div>
+
+---
+
+## Tiếng Việt
+
+### Tổng Quan
+
+Node này mở rộng chức năng của [n8n](https://n8n.io/) cho phép trích xuất văn bản, hình ảnh, bảng và dữ liệu mẫu từ các tệp PDF.
+
+Node Extract PDF cho phép bạn trích xuất dữ liệu từ tệp PDF một cách dễ dàng và linh hoạt. Nó cũng hỗ trợ OCR cho các PDF dạng ảnh hoặc văn bản quét, nhận diện loại tài liệu và trích xuất bảng.
+
+### Chức Năng Chính:
+
+- ✅ Trích xuất văn bản từ PDF
+- ✅ Trích xuất metadata của tệp PDF
+- ✅ Định dạng và làm sạch văn bản trích xuất
+- ✅ OCR (Nhận dạng ký tự quang học) cho PDF dạng ảnh
+- ✅ Trích xuất hình ảnh từ PDF
+- ✅ Trích xuất và định dạng bảng
+- ✅ Nhận diện loại tài liệu và trích xuất trường thông tin
+- ✅ Xử lý PDF lớn với phân trang
+- ✅ Hỗ trợ nhiều ngôn ngữ cho OCR
+
+### Cài Đặt
+
+#### Phương Pháp 1: Trong giao diện n8n
+
+1. Truy cập setting của n8n
+2. Chọn tab "Community nodes"
+3. Tìm "n8n-nodes-extract-pdf" và click vào "Install"
+
+#### Phương Pháp 2: Sử dụng CLI
 
 ```bash
-npm install n8n-nodes-extract-pdf@1.0.7
+npm install n8n-nodes-extract-pdf@1.0.18
 ```
 
-Hoặc bạn có thể sao chép kho lưu trữ và làm theo các bước sau:
+#### Phương Pháp 3: Trong Docker
 
-1. Sao chép kho lưu trữ:
-   ```bash
-   git clone https://github.com/yourusername/n8n-nodes-extract-pdf.git
-   ```
+```bash
+# Sử dụng image cơ bản của n8n
+docker run -it --rm \
+  --name n8n \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  n8nio/n8n \
+  n8n start
 
-2. Di chuyển đến thư mục dự án:
-   ```bash
-   cd n8n-nodes-extract-pdf
-   ```
+# Sau đó cài đặt node
+docker exec -it n8n npm install n8n-nodes-extract-pdf@1.0.18
 
-3. Cài đặt các phụ thuộc:
-   ```bash
-   npm install
-   ```
-
-4. Xây dựng dự án:
-   ```bash
-   npm run build
-   ```
-
-5. Khởi động lại n8n để tải node mới.
-
-## Cách sử dụng
-
-1. Cài đặt gói từ npm:
-   ```bash
-   npm install n8n-nodes-extract-pdf@1.0.7
-   ```
-
-2. Thêm node `Extract PDF` vào workflow n8n của bạn.
-3. Cấu hình node để đọc tệp PDF.
-4. Chạy workflow để trích xuất văn bản từ tệp PDF.
-
-### Tùy chọn cấu hình
-
-Node này cung cấp nhiều tùy chọn cấu hình:
-
-- **PDF File**: Tệp PDF để trích xuất văn bản (bắt buộc)
-- **Page Range**: Phạm vi trang để trích xuất (ví dụ: "1-5, 8, 11-13"). Để trống để trích xuất tất cả các trang.
-- **Include Metadata**: Bao gồm metadata của PDF trong đầu ra.
-- **Max File Size (MB)**: Kích thước tệp tối đa để xử lý (mặc định: 100MB).
-- **Continue On Error**: Tiếp tục thực thi ngay cả khi trích xuất thất bại cho một số trang.
-- **Process In Chunks**: Xử lý tệp PDF lớn theo từng phần nhỏ để cải thiện hiệu suất.
-- **Chunk Size (Pages)**: Số trang để xử lý trong mỗi phần (khi xử lý theo từng phần).
-- **Show Progress**: Hiển thị thông tin tiến trình trong quá trình xử lý.
-
-### Kết quả đầu ra
-
-Kết quả đầu ra của node sẽ là một đối tượng JSON chứa:
-
-```json
-{
-  "text": "Nội dung văn bản trích xuất từ PDF",
-  "performance": {
-    "processingTime": "2.34s",
-    "pagesProcessed": 15,
-    "pagesPerSecond": "6.41"
-  },
-  "metadata": {
-    "info": { ... },
-    "metadata": { ... },
-    "numberOfPages": 5,
-    "version": "1.10.100"
-  }
-}
+# Khởi động lại container
+docker restart n8n
 ```
 
-- Phần `metadata` chỉ được bao gồm nếu tùy chọn "Include Metadata" được bật.
-- Phần `performance` cung cấp thông tin về thời gian xử lý và tốc độ.
-- Nếu không có văn bản nào được trích xuất (như trong trường hợp PDF quét), bạn sẽ nhận được thông báo cảnh báo trong trường `warning`.
+#### Cài Đặt OCR (Tùy Chọn - Cần Thiết Cho PDF Dạng Ảnh)
 
-## Xử lý tệp PDF lớn
+Để sử dụng chức năng OCR, bạn cần cài đặt Tesseract OCR:
 
-Node này đã được tối ưu hóa để xử lý các tệp PDF lớn thông qua tính năng xử lý theo từng phần. Khi bạn bật tính năng này, lưu ý:
+**Windows:**
+1. Tải và cài đặt từ: https://github.com/UB-Mannheim/tesseract/wiki
+2. Thêm đường dẫn cài đặt Tesseract vào PATH hệ thống
 
-1. **Phân tách thành các phần**: PDF lớn được chia thành các phần nhỏ để xử lý riêng biệt.
-2. **Hiển thị tiến trình**: Bạn có thể theo dõi tiến trình xử lý trong nhật ký n8n.
-3. **Báo cáo hiệu suất**: Bạn sẽ nhận được báo cáo hiệu suất chi tiết trong kết quả.
-
-Đối với tệp PDF lớn, chúng tôi khuyến nghị:
-
-- Bật tùy chọn "Process In Chunks" 
-- Thiết lập "Chunk Size" dựa trên độ phức tạp của PDF (10-20 trang là hợp lý cho hầu hết các tệp)
-- Bật "Show Progress" để theo dõi quá trình
-
-## Xử lý lỗi và các trường hợp đặc biệt
-
-### PDF được bảo vệ bằng mật khẩu
-
-Node sẽ phát hiện và báo lỗi nếu PDF được bảo vệ bằng mật khẩu. Hiện tại, node không hỗ trợ xử lý các tệp PDF được bảo vệ.
-
-### PDF quét hoặc dựa trên hình ảnh
-
-Đối với PDF quét hoặc PDF dựa trên hình ảnh không có lớp văn bản, node sẽ trả về:
-
-```json
-{
-  "text": "",
-  "warning": "No text was extracted. This might be a scanned PDF or an image-based PDF without text layer."
-}
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr
 ```
 
-Để xử lý PDF quét, bạn có thể cần sử dụng OCR (Nhận dạng ký tự quang học) trước khi sử dụng node này.
+**macOS:**
+```bash
+brew install tesseract
+```
 
-### PDF có cấu trúc phức tạp
+**Cài Đặt Gói Ngôn Ngữ (Tùy Chọn):**
+```bash
+# Ubuntu/Debian (thay 'vie' bằng mã ngôn ngữ tương ứng)
+sudo apt-get install -y tesseract-ocr-vie
 
-Một số PDF có cấu trúc phức tạp (như nhiều cột, bảng, đồ thị) có thể không giữ lại định dạng trong đầu ra văn bản thuần túy. Trong trường hợp này:
+# macOS
+brew install tesseract-lang
+```
 
-1. Node vẫn trích xuất văn bản, nhưng định dạng có thể không được giữ nguyên.
-2. Thứ tự văn bản có thể khác với thứ tự trực quan trong PDF.
+---
 
-### Xử lý lỗi với tùy chọn "Continue On Error"
+## English
 
-Khi bật tùy chọn "Continue On Error":
+### Description
 
-1. Node sẽ bỏ qua lỗi khi xử lý các trang cụ thể và tiếp tục với các trang khác.
-2. Các cảnh báo sẽ được ghi vào nhật ký n8n.
-3. Kết quả đầu ra sẽ bao gồm văn bản từ các trang đã xử lý thành công.
+This n8n node extracts text, images, tables, and form fields from PDF files with powerful customization options.
 
-## Ví dụ chi tiết
+The `n8n-nodes-extract-pdf` node is a custom node for n8n that helps extract content from PDF files. This node offers comprehensive extraction capabilities, including text extraction, OCR for image-based PDFs, table extraction, document classification, and form field extraction.
 
-### Ví dụ 1: Trích xuất tất cả trang từ tệp PDF nhỏ
+### Key Features
 
-1. Sử dụng node `Read Binary File` để đọc tệp PDF.
-   - Thiết lập đường dẫn đến tệp PDF của bạn
-   
-2. Sử dụng node `Extract PDF` để trích xuất văn bản.
-   - Kết nối với đầu ra của node `Read Binary File`
-   - Không thiết lập Page Range để trích xuất tất cả các trang
-   - Tắt Process In Chunks vì đây là tệp nhỏ
+- Extract text from entire PDFs or specific pages (e.g., "1-5, 8, 11-13")
+- Extract metadata from PDF files
+- Control maximum file size for processing
+- Handle large PDF files efficiently by chunking
+- Track progress for large files
+- Performance reporting with processing time and speed
+- Support receiving data from other nodes (Google Drive, HTTP Request)
+- Extract images from PDFs
+- OCR for image-based PDFs with support for 9 languages
+- Extract tables from PDFs
+- AI-enhanced OCR with post-processing capabilities
+- Automatic document recognition and classification
+- Form field extraction from structured documents
 
-3. Sử dụng node `Set` để lưu trữ kết quả.
-   - Thiết lập biến đầu ra, ví dụ: `data.extractedText = $node["Extract PDF"].json.text`
+### Installation
 
-### Ví dụ 2: Trích xuất trang cụ thể từ tệp PDF lớn
+You can install the package from npm:
 
-1. Sử dụng node `Read Binary File` để đọc tệp PDF lớn.
-   - Thiết lập đường dẫn đến tệp PDF của bạn
-   
-2. Sử dụng node `Extract PDF` với cấu hình hiệu suất:
-   - Kết nối với đầu ra của node `Read Binary File`
-   - Thiết lập Page Range, ví dụ: "1-10, 15, 20-25"
-   - Bật Process In Chunks
-   - Thiết lập Chunk Size thành 5
-   - Bật Show Progress
-   - Bật Include Metadata để lấy thông tin tài liệu
+```bash
+npm install n8n-nodes-extract-pdf@1.0.18
+```
 
-3. Thêm node `IF` để kiểm tra văn bản trống:
-   - Nếu `$node["Extract PDF"].json.text` trống, có thể tệp đó là PDF quét
-   - Xử lý tương ứng dựa trên kết quả
+#### Docker Installation
 
-### Ví dụ 3: Xử lý batch nhiều tệp PDF
+If you're using n8n with Docker, follow these steps to install the package and required dependencies:
 
-1. Sử dụng node `Read Files From Folder` để quét thư mục chứa nhiều tệp PDF.
-   
-2. Thêm node `Split In Batches` để xử lý từng tệp riêng biệt.
-   
-3. Sử dụng node `Extract PDF` với tùy chọn Continue On Error:
-   - Bật Continue On Error để bỏ qua tệp có vấn đề
-   - Bật Process In Chunks cho hiệu suất tốt hơn
+1. Enter the Docker container:
+   ```bash
+   docker exec -it <your-n8n-container-name> /bin/sh
+   ```
 
-4. Thêm node `Merge` để kết hợp kết quả từ tất cả các tệp.
+2. Install the package:
+   ```bash
+   npm install n8n-nodes-extract-pdf@1.0.18
+   ```
 
-## Xử lý lỗi
+3. For OCR functionality, you'll need to install Tesseract:
+   ```bash
+   # For Alpine-based images
+   apk add --no-cache tesseract-ocr
 
-Node này xử lý các lỗi sau một cách rõ ràng:
+   # For Debian/Ubuntu-based images
+   apt-get update && apt-get install -y tesseract-ocr
+   ```
 
-- **Tệp PDF không tồn tại**: "PDF file not found: [đường dẫn]"
-- **Kích thước tệp vượt quá giới hạn**: "File size (X MB) exceeds the maximum allowed size (Y MB)"
-- **PDF được bảo vệ**: "The PDF file is password protected. This node cannot process protected PDFs."
-- **Phạm vi trang không hợp lệ**: "Invalid page range format: [chi tiết lỗi]"
-- **Số trang vượt quá tổng số trang**: "Page range includes page X, but the document only has Y page(s)"
-- **PDF bị hỏng**: "The PDF file is truncated or corrupted. Please check the file integrity."
-- **Cấu trúc PDF không hợp lệ**: "The PDF file has an invalid structure and cannot be processed."
+4. Restart the container:
+   ```bash
+   docker restart <your-n8n-container-name>
+   ```
 
-## Hiệu suất và tối ưu hóa
+### Usage
 
-Hiệu suất của node phụ thuộc vào:
+1. Add the "Extract PDF" node to your workflow
+2. Configure the PDF source:
+   - Local file path
+   - Binary data from another node (e.g., HTTP Request, Google Drive)
+3. Set your desired extraction options:
+   - Page range (leave empty for all pages)
+   - Include metadata
+   - Maximum file size
+   - Enable image extraction
+   - Enable OCR for image-based PDFs
+   - Select OCR language
+   - Enable table extraction
+   - Enable document recognition and classification
+   - Enable form field extraction
 
-1. **Kích thước tệp PDF**: Tệp lớn hơn sẽ mất nhiều thời gian hơn để xử lý.
-2. **Độ phức tạp của PDF**: PDF với nhiều phông chữ, hình ảnh và đồ họa phức tạp sẽ mất nhiều thời gian hơn.
-3. **Chunk Size**: Điều chỉnh để cân bằng giữa sử dụng bộ nhớ và tốc độ xử lý.
+### Configuration Options
 
-Gợi ý tối ưu hóa:
-
-- Đối với máy tính có RAM thấp, giảm Chunk Size xuống 5-10 trang
-- Đối với máy tính mạnh, tăng Chunk Size lên 20-30 trang
-- Luôn theo dõi báo cáo hiệu suất để điều chỉnh
-
-## Đóng góp
-
-Đóng góp luôn được chào đón! Vui lòng mở issue hoặc gửi pull request.
-
-## Giấy phép
-
-Dự án này được cấp phép theo Giấy phép MIT.
+| Option | Description |
+|--------|-------------|
+| **PDF Source** | Choose between file path or binary data |
+| **File Path** | Path to the PDF file (if using file path) |
+| **Input Data Field** | Field containing the binary PDF data (if using binary data) |
+| **Page Range** | Specify pages to extract (e.g., "1-5, 8, 11-13") |
+| **Include Metadata** | Include PDF document metadata in output |
+| **Max File Size (MB)** | Maximum file size to process |
+| **Chunk Size** | Number of pages to process at once for large files |
+| **Show Progress** | Display progress information during processing |
+| **Extract Images** | Extract images from the PDF |
+| **Perform OCR** | Perform OCR on image-based PDFs |
+| **OCR Language** | Language for OCR (supports 9 languages) |
+| **OCR Enhancement Level** | Level of AI post-processing for OCR results |
+| **Extract Tables** | Extract tables from the PDF |
+| **Detect Document Type** | Automatically identify document type (invoice, receipt, etc.) |
+| **Extract Form Fields** | Extract fields from structured documents |
+| **Document Categories** | Categories to use for document classification |
+| **Custom Templates Path** | Path to custom document templates |
