@@ -13,15 +13,14 @@ jest.mock('sharp', () => ({
   }))
 }));
 
-jest.mock('franc', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation((text: string) => {
+jest.mock('franc', () => {
+  return jest.fn().mockImplementation((text: string) => {
     // Mock simple language detection logic
     if (text.includes('Việt') || text.includes('tiếng')) return 'vie';
     if (text.includes('français') || text.includes('bonjour')) return 'fra';
     return 'eng';
-  })
-}));
+  });
+});
 
 jest.mock('iso-639-3', () => ({
   __esModule: true,

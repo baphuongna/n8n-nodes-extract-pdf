@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-extract-pdf",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "n8n node to extract text, images and tables from PDF with multilingual support, language detection and comprehensive test suite",
   "keywords": [
     "n8n",
@@ -33,7 +33,8 @@
     "start": "node nodes/ExtractPdfNode/ExtractPdfNode.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "dist",
@@ -46,6 +47,8 @@
     ]
   },
   "dependencies": {
+    "franc": "^6.2.0",
+    "iso-639-3": "^3.0.1",
     "natural": "^6.5.0",
     "pdf-img-convert": "^1.2.1",
     "pdf-parse": "^1.1.1",
@@ -64,5 +67,8 @@
     "pdfkit": "^0.16.0",
     "ts-jest": "^29.2.6",
     "typescript": "~4.6.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=0.146.0"
   }
 }

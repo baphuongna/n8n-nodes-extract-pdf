@@ -13,14 +13,16 @@ jest.mock('sharp', () => ({
   }))
 }));
 
-jest.mock('franc', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation((text: string) => {
+jest.mock('franc', () => {
+  return jest.fn().mockImplementation((text: string) => {
     if (text.includes('Việt') || text.includes('tiếng')) return 'vie';
     if (text.includes('français') || text.includes('bonjour')) return 'fra';
+    if (text.includes('中国') || text.includes('汉字')) return 'zho';
+    if (text.includes('日本') || text.includes('漢字')) return 'jpn';
+    if (text.includes('한국') || text.includes('한글')) return 'kor';
     return 'eng';
-  })
-}));
+  });
+});
 
 // Đường dẫn đến các file PDF mẫu
 const FIXTURES_DIR = path.join(__dirname, '../fixtures');
